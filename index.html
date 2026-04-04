@@ -12,29 +12,32 @@
     .grid{display:grid;grid-template-columns:1fr 1.4fr 1fr;gap:14px;margin-top:14px}
     .panel{background:#fff;border-radius:16px;padding:14px;box-shadow:0 4px 16px rgba(0,0,0,.08)}
     .panel h3{margin:0 0 10px;font-size:18px;color:#0d6d70}
-    .metric{margin-bottom:10px}.metric-label{display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px}
-    .bar{height:14px;background:#e9ecef;border-radius:999px;overflow:hidden}
+    .metric{margin-bottom:8px}.metric-label{display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px}
+    .bar{height:12px;background:#e9ecef;border-radius:999px;overflow:hidden}
     .fill{height:100%;background:linear-gradient(90deg,#0d6d70,#b46b30);width:50%;transition:width .3s ease}
-    .scenario{background:linear-gradient(135deg,#fff3cd,#ffeaa7);border-left:5px solid:#b07a00;padding:12px;border-radius:14px;margin-bottom:12px}
+    .scenario{background:linear-gradient(135deg,#fff3cd,#ffeaa7);border-left:5px solid:#b07a00;padding:12px;border-radius:14px;margin-bottom:10px}
     .round{font-size:18px;font-weight:700;margin:0 0 6px;color:#0d6d70}.hint{font-size:13px;margin:0}
-    .eventbox{background:#e8f4f4;border-left:4px solid #0d6d70;padding:10px;border-radius:12px;margin-top:10px;font-size:13px}
-    .btnrow{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0 8px}
-    button{border:0;border-radius:999px;padding:10px 14px;font-weight:700;cursor:pointer;touch-action:manipulation;font-size:13px}
+    .eventbox{background:#e8f4f4;border-left:4px solid #0d6d70;padding:10px;border-radius:12px;margin-top:8px;font-size:13px}
+    .btnrow{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0 6px}
+    button{border:0;border-radius:999px;padding:9px 13px;font-weight:700;cursor:pointer;touch-action:manipulation;font-size:13px}
     .btn{background:linear-gradient(135deg,#0d6d70,#b46b30);color:#fff}
     .btn2{background:#eef4f4;color:#0d6d70;border:1px solid #c7dede}
     .btn:disabled,.btn2:disabled{opacity:.45;cursor:not-allowed}
-    .decision{display:block;width:100%;text-align:left;background:#f8f9fa;border:2px solid transparent;padding:10px;border-radius:14px;margin-bottom:8px;font-size:13px}
+    #decisions{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:8px;margin-top:8px}
+    .decision{background:#f8f9fa;border:2px solid transparent;padding:8px;border-radius:14px;font-size:12px}
     .decision.sel{border-color:#0d6d70;background:#e8f4f4}
-    .dtitle{font-weight:700;margin-bottom:4px}.dtext{font-size:12px;color:#555}
-    .tags{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px}
-    .tag{font-size:11px;padding:3px 7px;border-radius:999px;background:#fff;border:1px solid #ddd}
-    .log{max-height:360px;overflow:auto;background:#f8f9fa;border-radius:12px;padding:10px;font-size:13px}
-    .logitem{background:#fff;border-left:4px solid #0d6d70;padding:8px;border-radius:8px;margin-bottom:6px}
-    .status{background:#e9f7f1;border-radius:14px;padding:12px;margin-top:8px;text-align:center;font-size:13px}
-    .status strong{display:block;color:#0d6d70;font-size:16px;margin-bottom:4px}
+    .dtitle{font-weight:700;margin-bottom:3px}.dtext{font-size:11px;color:#555}
+    .tags{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px}
+    .tag{font-size:10px;padding:2px 6px;border-radius:999px;background:#fff;border:1px solid #ddd}
+    .log{max-height:180px;overflow:auto;background:#f8f9fa;border-radius:12px;padding:8px;font-size:12px;margin-bottom:8px}
+    .logitem{background:#fff;border-left:4px solid #0d6d70;padding:6px;border-radius:8px;margin-bottom:4px}
+    .chartbox{height:220px}
+    .status{background:#e9f7f1;border-radius:14px;padding:10px;margin-top:6px;text-align:center;font-size:13px}
+    .status strong{display:block;color:#0d6d70;font-size:16px;margin-bottom:3px}
     .small{font-size:11px;color:#666}
-    @media(max-width:980px){.grid{grid-template-columns:1fr}.header h1{font-size:22px}}
+    @media(max-width:1100px){.grid{grid-template-columns:1fr}.header h1{font-size:22px}}
   </style>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
   <div class="wrap">
@@ -69,8 +72,11 @@
       </div>
 
       <div class="panel">
-        <h3>📝 Журнал</h3>
+        <h3>📝 Журнал и динамика</h3>
         <div class="log" id="log"></div>
+        <div class="chartbox">
+          <canvas id="metricsChart"></canvas>
+        </div>
       </div>
     </div>
   </div>
@@ -91,6 +97,9 @@ let state = {
   noStaff: 0,
   noQuality: 0
 };
+
+let history = [{...INITIAL}];
+let metricsChart = null;
 
 const SCENARIOS = [
   'Дефицит по ОМС, очереди в поликлинике и изношенный корпус терапии.',
@@ -160,7 +169,7 @@ function renderStatus(){
     const strong = Object.entries(m).filter(([k,v])=>k==='overload'||k==='penalties'?v<=40:v>=60).length;
     const crisis = m.finance < 30 || m.overload > 85 || m.infra < 25;
     let text;
-    if(!crisis && strong>=4 && m.staff>=35 && Object.values(m).every(x=>x>=30 || (x===m.penalties && x<=70))){
+    if(!crisis && strong>=4 && m.staff>=35 && Object.values(m).every((x,i)=>x>=30 || Object.keys(m)[i]==='penalties')){
       text = 'Сбалансированная больница. Обсудите, какие решения оказались ключевыми.';
     }else if(m.finance >= 55 && (m.quality < 40 || m.access < 40 || m.reputation < 40)){
       text = 'Финансово устойчиво, но ценой качества, доступности или доверия.';
@@ -177,12 +186,54 @@ function renderStatus(){
   }
 }
 
+function initChart(){
+  const ctx = document.getElementById('metricsChart').getContext('2d');
+  const labels = history.map((_,i)=>`Q${i}`);
+  metricsChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        {label:'Финансы', data: history.map(h=>h.finance), borderColor:'#0d6d70', tension:0.2},
+        {label:'Качество', data: history.map(h=>h.quality), borderColor:'#1f7a8c', tension:0.2},
+        {label:'Перегрузка (обратная)', data: history.map(h=>100-h.overload), borderColor:'#b46b30', tension:0.2},
+        {label:'Репутация', data: history.map(h=>h.reputation), borderColor:'#8b5cf6', tension:0.2}
+      ]
+    },
+    options:{
+      responsive:true,
+      maintainAspectRatio:false,
+      scales:{y:{min:0,max:100}},
+      plugins:{legend:{labels:{boxWidth:12,font:{size:11}}}}
+    }
+  });
+}
+
+function updateChart(){
+  if(!metricsChart){
+    initChart();
+    return;
+  }
+  metricsChart.data.labels = history.map((_,i)=>`Q${i}`);
+  metricsChart.data.datasets[0].data = history.map(h=>h.finance);
+  metricsChart.data.datasets[1].data = history.map(h=>h.quality);
+  metricsChart.data.datasets[2].data = history.map(h=>100-h.overload);
+  metricsChart.data.datasets[3].data = history.map(h=>h.reputation);
+  metricsChart.update();
+}
+
+function snapshotMetrics(){
+  history.push({...state.metrics});
+  updateChart();
+}
+
 function renderAll(){
   renderMetrics();
   renderScenario();
   renderDecisions();
   renderLog();
   renderStatus();
+  updateChart();
 }
 
 function revealEvent(){
@@ -197,7 +248,6 @@ function applyEventEffects(){
   const idx = Math.min(state.round, EVENTS.length-1);
   const ev = EVENTS[idx];
   const m = state.metrics;
-  // Специальная логика для медийного сюжета (Q7)
   if(idx === 6){
     if(m.reputation >= 55){
       m.reputation = clamp(m.reputation + 5);
@@ -278,6 +328,7 @@ function applyRound(){
   if(state.round >= 8){
     state.log.push('Финальный аудит: обсудите, какую модель больницы вы построили.');
   }
+  snapshotMetrics();
   renderAll();
 }
 
@@ -292,6 +343,7 @@ function resetGame(){
     noStaff: 0,
     noQuality: 0
   };
+  history = [{...INITIAL}];
   document.getElementById('eventBox').innerHTML = 'Нажмите «Показать событие», когда группа будет готова.';
   document.getElementById('applyBtn').disabled = true;
   renderAll();
