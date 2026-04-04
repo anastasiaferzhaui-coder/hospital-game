@@ -1,0 +1,253 @@
+{
+  "metrics": {
+    "finance": {
+      "name": "Финансовый результат по ОМС",
+      "direction": "up"
+    },
+    "volumes": {
+      "name": "Выполнение объёмов по ТПГГ",
+      "direction": "up"
+    },
+    "penalties": {
+      "name": "Штрафы и претензии ОМС",
+      "direction": "down"
+    },
+    "access": {
+      "name": "Доступность и очереди",
+      "direction": "up"
+    },
+    "quality": {
+      "name": "Качество и безопасность",
+      "direction": "up"
+    },
+    "overload": {
+      "name": "Перегрузка стационаров",
+      "direction": "down"
+    },
+    "infra": {
+      "name": "Состояние зданий и инфраструктуры",
+      "direction": "up"
+    },
+    "staff": {
+      "name": "Кадровая устойчивость",
+      "direction": "up"
+    },
+    "reputation": {
+      "name": "Репутация и доверие пациентов",
+      "direction": "up"
+    }
+  },
+  "initial_state": {
+    "finance": 42,
+    "volumes": 48,
+    "penalties": 62,
+    "access": 40,
+    "quality": 52,
+    "overload": 70,
+    "infra": 35,
+    "staff": 44,
+    "reputation": 46
+  },
+  "decisions": [
+    {
+      "id": "audit_docs",
+      "title": "Внутренний аудит документации",
+      "text": "Команда экспертов проверяет карты перед отправкой в ОМС, обучает кодированию.",
+      "effects": {
+        "finance": 4,
+        "penalties": -10,
+        "access": -2,
+        "staff": -1,
+        "reputation": 2
+      }
+    },
+    {
+      "id": "strengthen_outpatient",
+      "title": "Усилить поликлинику",
+      "text": "Перераспределить врачей в поликлинику, больше приёмов и диспансеризации.",
+      "effects": {
+        "access": 8,
+        "volumes": 4,
+        "overload": -5,
+        "quality": 2,
+        "staff": -3
+      }
+    },
+    {
+      "id": "shorter_los",
+      "title": "Сократить длительность госпитализации",
+      "text": "Оптимизация маршрутов и ранняя выписка, больше дневного стационара.",
+      "effects": {
+        "finance": 5,
+        "overload": -8,
+        "quality": -3,
+        "penalties": -2,
+        "reputation": -1
+      }
+    },
+    {
+      "id": "convert_beds",
+      "title": "Перевести часть коек в дневной стационар",
+      "text": "Часть терапевтических коек становится дневным стационаром.",
+      "effects": {
+        "volumes": 5,
+        "finance": 3,
+        "overload": -6,
+        "access": 3,
+        "infra": -1
+      }
+    },
+    {
+      "id": "paid_services",
+      "title": "Запустить платные услуги",
+      "text": "Развитие платных/ДМС услуг на базе отделений.",
+      "effects": {
+        "finance": 8,
+        "volumes": -2,
+        "access": -3,
+        "reputation": -4
+      }
+    },
+    {
+      "id": "staff_package",
+      "title": "Кадровый пакет для дефицитных специальностей",
+      "text": "Доплаты, жильё и обучение для анестезиологов, реаниматологов, неонатологов.",
+      "effects": {
+        "staff": 8,
+        "quality": 3,
+        "finance": -5,
+        "access": 2,
+        "overload": -2
+      }
+    },
+    {
+      "id": "cap_repair",
+      "title": "Капремонт старого корпуса",
+      "text": "Капитальный ремонт с временным закрытием части коек.",
+      "effects": {
+        "infra": 10,
+        "overload": 5,
+        "finance": -4,
+        "access": -3,
+        "reputation": 2
+      }
+    },
+    {
+      "id": "cost_cutting",
+      "title": "Антикризисная экономия",
+      "text": "Экономия на расходниках, обучении и сервисах.",
+      "effects": {
+        "finance": 6,
+        "quality": -5,
+        "staff": -4,
+        "reputation": -3,
+        "penalties": 3
+      }
+    },
+    {
+      "id": "palliative",
+      "title": "Развитие паллиативной службы",
+      "text": "Укрепить паллиатив и хоспис, высвободить ресурсы стационара.",
+      "effects": {
+        "quality": 5,
+        "overload": -4,
+        "finance": -3,
+        "infra": -2,
+        "reputation": 4
+      }
+    },
+    {
+      "id": "it_invest",
+      "title": "Инвестиции в ИТ и документооборот",
+      "text": "Внедрение ИС, электронной записи и цифровой документации.",
+      "effects": {
+        "finance": 3,
+        "penalties": -5,
+        "access": 3,
+        "staff": 1,
+        "infra": 2
+      }
+    }
+  ],
+  "events": [
+    {
+      "title": "Новые стандарты ОМС",
+      "text": "Переход на обновлённые стандарты оплаты и контроля.",
+      "effects": {
+        "volumes": -3,
+        "penalties": 3
+      }
+    },
+    {
+      "title": "Ужесточение плана диспансеризации",
+      "text": "Регион увеличивает целевые показатели посещений поликлиники.",
+      "effects": {
+        "volumes": 4,
+        "access": -3
+      }
+    },
+    {
+      "title": "Проверка страховой компании",
+      "text": "Выездная проверка и детальный аудит документации.",
+      "effects": {
+        "penalties": 8,
+        "finance": -4
+      }
+    },
+    {
+      "title": "Коммунальная авария",
+      "text": "Авария на инженерных сетях в одном из корпусов.",
+      "effects": {
+        "infra": -8,
+        "overload": 5,
+        "reputation": -3
+      }
+    },
+    {
+      "title": "Пересмотр тарифов",
+      "text": "Изменение тарифов ОМС и перераспределение объёмов.",
+      "effects": {
+        "finance": -3,
+        "volumes": -4,
+        "reputation": -2
+      }
+    },
+    {
+      "title": "Кадровая волна",
+      "text": "Уход части среднего персонала и ключевых специалистов.",
+      "effects": {
+        "staff": -8,
+        "quality": -3,
+        "access": -2
+      }
+    },
+    {
+      "title": "Медийный сюжет о больнице",
+      "text": "В зависимости от траектории это может быть успешный кейс или скандал.",
+      "effects": {}
+    },
+    {
+      "title": "Итоговый аудит",
+      "text": "Совместная комиссия ТФОМС и учредителя подводит итоги.",
+      "effects": {}
+    }
+  ],
+  "autorules": {
+    "ignore_infra_rounds": 2,
+    "infra_penalty": {
+      "infra": -6,
+      "overload": 4
+    },
+    "ignore_staff_rounds": 2,
+    "staff_penalty": {
+      "staff": -7,
+      "quality": -3,
+      "reputation": -2
+    },
+    "ignore_quality_rounds": 2,
+    "quality_penalty": {
+      "penalties": 6,
+      "reputation": -5
+    }
+  }
+}
