@@ -1,359 +1,586 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Игровой симулятор — Многопрофильная больница</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🏥 Симулятор больницы — Управление по ОМС</title>
   <style>
-    *{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;background:linear-gradient(135deg,#f5f7fa,#c3cfe2);min-height:100vh;color:#222}
-    .wrap{max-width:1200px;margin:0 auto;padding:14px}
-    .header{background:linear-gradient(135deg,#0d6d70,#b46b30);color:#fff;padding:18px;border-radius:16px;text-align:center;box-shadow:0 8px 24px rgba(0,0,0,.15)}
-    .header h1{margin:0;font-size:26px}.header p{margin:8px 0 0;font-size:14px;opacity:.95}
-    .grid{display:grid;grid-template-columns:1fr 1.4fr 1fr;gap:14px;margin-top:14px}
-    .panel{background:#fff;border-radius:16px;padding:14px;box-shadow:0 4px 16px rgba(0,0,0,.08)}
-    .panel h3{margin:0 0 10px;font-size:18px;color:#0d6d70}
-    .metric{margin-bottom:8px}.metric-label{display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px}
-    .bar{height:12px;background:#e9ecef;border-radius:999px;overflow:hidden}
-    .fill{height:100%;background:linear-gradient(90deg,#0d6d70,#b46b30);width:50%;transition:width .3s ease}
-    .scenario{background:linear-gradient(135deg,#fff3cd,#ffeaa7);border-left:5px solid:#b07a00;padding:12px;border-radius:14px;margin-bottom:10px}
-    .round{font-size:18px;font-weight:700;margin:0 0 6px;color:#0d6d70}.hint{font-size:13px;margin:0}
-    .eventbox{background:#e8f4f4;border-left:4px solid #0d6d70;padding:10px;border-radius:12px;margin-top:8px;font-size:13px}
-    .btnrow{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0 6px}
-    button{border:0;border-radius:999px;padding:9px 13px;font-weight:700;cursor:pointer;touch-action:manipulation;font-size:13px}
-    .btn{background:linear-gradient(135deg,#0d6d70,#b46b30);color:#fff}
-    .btn2{background:#eef4f4;color:#0d6d70;border:1px solid #c7dede}
-    .btn:disabled,.btn2:disabled{opacity:.45;cursor:not-allowed}
-    #decisions{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:8px;margin-top:8px}
-    .decision{background:#f8f9fa;border:2px solid transparent;padding:8px;border-radius:14px;font-size:12px}
-    .decision.sel{border-color:#0d6d70;background:#e8f4f4}
-    .dtitle{font-weight:700;margin-bottom:3px}.dtext{font-size:11px;color:#555}
-    .tags{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px}
-    .tag{font-size:10px;padding:2px 6px;border-radius:999px;background:#fff;border:1px solid #ddd}
-    .log{max-height:180px;overflow:auto;background:#f8f9fa;border-radius:12px;padding:8px;font-size:12px;margin-bottom:8px}
-    .logitem{background:#fff;border-left:4px solid #0d6d70;padding:6px;border-radius:8px;margin-bottom:4px}
-    .chartbox{height:220px}
-    .status{background:#e9f7f1;border-radius:14px;padding:10px;margin-top:6px;text-align:center;font-size:13px}
-    .status strong{display:block;color:#0d6d70;font-size:16px;margin-bottom:3px}
-    .small{font-size:11px;color:#666}
-    @media(max-width:1100px){.grid{grid-template-columns:1fr}.header h1{font-size:22px}}
+    *{box-sizing:border-box;margin:0}
+    body{
+      margin:0;
+      font-family:'Segoe UI',Roboto,system-ui,sans-serif;
+      background:#f0f4f8;
+      min-height:100vh;
+      color:#1e293b;
+      padding:12px;
+    }
+    .dashboard{max-width:1600px;margin:0 auto;display:flex;flex-direction:column;gap:12px}
+    .header{
+      background:linear-gradient(105deg,#0b4f6c 0%,#1b7b8a 100%);
+      color:#fff;
+      padding:16px 24px;
+      border-radius:24px;
+      box-shadow:0 8px 20px rgba(0,40,50,0.15);
+      display:flex;
+      align-items:baseline;
+      justify-content:space-between;
+      flex-wrap:wrap;
+    }
+    .header h1{font-weight:600;font-size:1.8rem;margin:0}
+    .header p{margin:0;opacity:0.9;font-weight:400;font-size:0.95rem}
+    
+    .main-layout{
+      display:grid;
+      grid-template-columns:380px 1fr;
+      gap:12px;
+    }
+    
+    .left-panel{
+      display:flex;
+      flex-direction:column;
+      gap:12px;
+    }
+    
+    .card{
+      background:#fff;
+      border-radius:20px;
+      padding:16px;
+      box-shadow:0 6px 16px rgba(0,0,0,0.04),0 2px 4px rgba(0,20,30,0.05);
+      border:1px solid #e9edf2;
+    }
+    
+    .card h3{
+      margin-top:0;
+      margin-bottom:14px;
+      font-weight:600;
+      font-size:1.2rem;
+      color:#0b4f6c;
+      display:flex;
+      align-items:center;
+      gap:6px;
+      border-bottom:2px solid #dde7ed;
+      padding-bottom:8px;
+    }
+    
+    .metric-item{margin-bottom:10px}
+    .metric-header{display:flex;justify-content:space-between;font-size:0.8rem;font-weight:500;margin-bottom:3px}
+    .metric-header span{font-size:0.8rem}
+    .metric-bar-bg{height:10px;background:#e2e8f0;border-radius:40px;overflow:hidden}
+    .metric-bar-fill{
+      height:100%;
+      background:linear-gradient(90deg,#0f6b7c,#c27e3e);
+      border-radius:40px;
+      width:50%;
+      transition:width 0.3s;
+    }
+    
+    .log-container{
+      max-height:200px;
+      overflow-y:auto;
+      background:#fafcff;
+      border-radius:16px;
+      padding:10px;
+      border:1px solid #dde5ec;
+    }
+    .log-entry{
+      background:#fff;
+      padding:7px 10px;
+      border-radius:12px;
+      margin-bottom:5px;
+      border-left:4px solid #0f6b7c;
+      font-size:0.8rem;
+      box-shadow:0 1px 2px rgba(0,0,0,0.02);
+    }
+    
+    .chart-wrapper{
+      height:220px;
+      margin-top:4px;
+    }
+    
+    .right-panel{
+      display:flex;
+      flex-direction:column;
+      gap:12px;
+    }
+    
+    .scenario-block{
+      background:#fef9e7;
+      border-radius:20px;
+      padding:18px 20px;
+      border-left:6px solid #b6802c;
+    }
+    .round-title{font-size:1.6rem;font-weight:700;color:#0b4f6c;margin-bottom:6px}
+    .scenario-desc{font-size:1.05rem;margin:6px 0}
+    .event-card{
+      background:#e3f2f5;
+      padding:12px 16px;
+      border-radius:16px;
+      margin-top:12px;
+      border-left:5px solid #0f6b7c;
+      font-size:0.95rem;
+    }
+    
+    .decisions-grid{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:12px;
+      margin:12px 0 10px;
+    }
+    .decision-card{
+      background:#f9fbfd;
+      border:1.5px solid #d8e2ea;
+      border-radius:16px;
+      padding:12px;
+      cursor:pointer;
+      transition:all 0.15s;
+    }
+    .decision-card:hover:not(.disabled){
+      background:#f0f6fa;
+      border-color:#0f6b7c;
+    }
+    .decision-card.selected{
+      border:2.5px solid #0b6f7c;
+      background:#e5f2f5;
+      box-shadow:0 4px 12px rgba(11,79,108,0.1);
+    }
+    .decision-card.disabled{opacity:0.5;cursor:not-allowed;background:#f1f3f5}
+    .decision-title{font-weight:700;font-size:0.95rem;margin-bottom:4px;color:#0b3e4f}
+    .decision-desc{font-size:0.8rem;color:#334155;margin-bottom:8px;line-height:1.35}
+    .tags{display:flex;flex-wrap:wrap;gap:4px}
+    .tag{
+      background:#fff;
+      border:1px solid #bdd3df;
+      padding:2px 7px;
+      border-radius:30px;
+      font-size:0.7rem;
+      font-weight:500;
+      color:#1e4b5e;
+    }
+    
+    .action-bar{display:flex;gap:12px;flex-wrap:wrap;margin:12px 0 6px}
+    .btn{
+      border:none;
+      background:#eef2f6;
+      padding:11px 20px;
+      border-radius:50px;
+      font-weight:600;
+      font-size:0.9rem;
+      cursor:pointer;
+      color:#1e3f50;
+      border:1px solid #cbd7e2;
+      transition:all 0.15s;
+    }
+    .btn:hover{
+      background:#e0e8f0;
+    }
+    .btn-primary{
+      background:linear-gradient(145deg,#0b6f7c,#9e632b);
+      color:#fff;
+      border:none;
+      box-shadow:0 4px 12px rgba(11,111,124,0.3);
+    }
+    .btn-primary:hover{
+      background:linear-gradient(145deg,#0a5e6a,#8e5626);
+    }
+    .btn:disabled{opacity:0.5;pointer-events:none}
+    
+    .status-badge{
+      background:#e1f3f0;
+      padding:12px 16px;
+      border-radius:18px;
+      text-align:center;
+      font-weight:500;
+      font-size:0.95rem;
+      margin-top:10px;
+    }
+    
+    @media (max-width:1000px){
+      .main-layout{grid-template-columns:1fr}
+    }
+    @media (max-width:600px){
+      .decisions-grid{grid-template-columns:1fr}
+    }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
-  <div class="wrap">
-    <div class="header">
-      <h1>🏥 Многопрофильная больница</h1>
-      <p>8 кварталов, 9 метрик, 10 решений. В каждом квартале выберите 2 решения и посмотрите, к чему придёт больница.</p>
-    </div>
+<div class="dashboard">
+  <div class="header">
+    <h1>🏥 Многопрофильная больница</h1>
+    <p>8 кварталов · 9 метрик · 10 решений. Выберите 2 решения в каждом раунде.</p>
+  </div>
 
-    <div class="grid">
-      <div class="panel">
-        <h3>📊 Метрики</h3>
-        <div id="metrics"></div>
+  <div class="main-layout">
+    <div class="left-panel">
+      <div class="card">
+        <h3>📊 Ключевые показатели</h3>
+        <div id="metricsContainer"></div>
       </div>
-
-      <div class="panel">
-        <div class="scenario">
-          <div class="round" id="roundTitle">Q1 — Исходное состояние</div>
-          <p class="hint" id="scenarioText">Дефицит по ОМС, очереди в поликлинике и изношенный корпус терапии.</p>
-          <div class="eventbox" id="eventBox">Нажмите «Показать событие», когда группа будет готова.</div>
-        </div>
-        <h3>🎯 Выберите 2 решения</h3>
-        <div id="decisions"></div>
-        <div class="btnrow">
-          <button class="btn2" id="eventBtn">Показать событие</button>
-          <button class="btn" id="applyBtn" disabled>Применить решения</button>
-          <button class="btn2" id="resetBtn">Новая игра</button>
-        </div>
-        <div class="status" id="statusBox">
-          <strong>Статус игры</strong>
-          <div>Раунд 1. Выберите 2 решения.</div>
-        </div>
+      
+      <div class="card">
+        <h3>📋 Журнал событий</h3>
+        <div class="log-container" id="logContainer"></div>
       </div>
-
-      <div class="panel">
-        <h3>📝 Журнал и динамика</h3>
-        <div class="log" id="log"></div>
-        <div class="chartbox">
+      
+      <div class="card">
+        <h3>📈 Динамика показателей</h3>
+        <div class="chart-wrapper">
           <canvas id="metricsChart"></canvas>
         </div>
       </div>
     </div>
+
+    <div class="right-panel">
+      <div class="card">
+        <div class="scenario-block">
+          <div class="round-title" id="roundTitle">Q1 — Исходное состояние</div>
+          <div class="scenario-desc" id="scenarioText">Дефицит по ОМС, очереди в поликлинике и изношенный корпус терапии.</div>
+          <div class="event-card" id="eventBox">👥 Нажмите «Показать событие», когда группа готова.</div>
+        </div>
+        
+        <h3 style="margin-top:16px;">🎯 Выберите ровно 2 решения</h3>
+        <div id="decisionsContainer" class="decisions-grid"></div>
+
+        <div class="action-bar">
+          <button class="btn" id="eventBtn">📋 Показать событие</button>
+          <button class="btn btn-primary" id="applyBtn" disabled>✅ Применить (2 решения)</button>
+          <button class="btn" id="resetBtn">🔄 Новая игра</button>
+        </div>
+
+        <div class="status-badge" id="statusBox">
+          <strong>📍 Статус</strong><br>Раунд 1 · Выберите 2 решения
+        </div>
+      </div>
+    </div>
   </div>
+</div>
 
 <script>
-const METRICS = {"finance": {"name": "Финансовый результат по ОМС", "direction": "up"}, "volumes": {"name": "Выполнение объёмов по ТПГГ", "direction": "up"}, "penalties": {"name": "Штрафы и претензии ОМС", "direction": "down"}, "access": {"name": "Доступность и очереди", "direction": "up"}, "quality": {"name": "Качество и безопасность", "direction": "up"}, "overload": {"name": "Перегрузка стационаров", "direction": "down"}, "infra": {"name": "Состояние зданий и инфраструктуры", "direction": "up"}, "staff": {"name": "Кадровая устойчивость", "direction": "up"}, "reputation": {"name": "Репутация и доверие пациентов", "direction": "up"}};
-const INITIAL = {"finance": 42, "volumes": 48, "penalties": 62, "access": 40, "quality": 52, "overload": 70, "infra": 35, "staff": 44, "reputation": 46};
-const DECISIONS = [{"id": "audit_docs", "title": "Внутренний аудит документации", "text": "Команда экспертов проверяет карты перед отправкой в ОМС, обучает кодированию.", "effects": {"finance": 4, "penalties": -10, "access": -2, "staff": -1, "reputation": 2}}, {"id": "strengthen_outpatient", "title": "Усилить поликлинику", "text": "Перераспределить врачей в поликлинику, больше приёмов и диспансеризации.", "effects": {"access": 8, "volumes": 4, "overload": -5, "quality": 2, "staff": -3}}, {"id": "shorter_los", "title": "Сократить длительность госпитализации", "text": "Оптимизация маршрутов и ранняя выписка, больше дневного стационара.", "effects": {"finance": 5, "overload": -8, "quality": -3, "penalties": -2, "reputation": -1}}, {"id": "convert_beds", "title": "Перевести часть коек в дневной стационар", "text": "Часть терапевтических коек становится дневным стационаром.", "effects": {"volumes": 5, "finance": 3, "overload": -6, "access": 3, "infra": -1}}, {"id": "paid_services", "title": "Запустить платные услуги", "text": "Развитие платных/ДМС услуг на базе отделений.", "effects": {"finance": 8, "volumes": -2, "access": -3, "reputation": -4}}, {"id": "staff_package", "title": "Кадровый пакет для дефицитных специальностей", "text": "Доплаты, жильё и обучение для анестезиологов, реаниматологов, неонатологов.", "effects": {"staff": 8, "quality": 3, "finance": -5, "access": 2, "overload": -2}}, {"id": "cap_repair", "title": "Капремонт старого корпуса", "text": "Капитальный ремонт с временным закрытием части коек.", "effects": {"infra": 10, "overload": 5, "finance": -4, "access": -3, "reputation": 2}}, {"id": "cost_cutting", "title": "Антикризисная экономия", "text": "Экономия на расходниках, обучении и сервисах.", "effects": {"finance": 6, "quality": -5, "staff": -4, "reputation": -3, "penalties": 3}}, {"id": "palliative", "title": "Развитие паллиативной службы", "text": "Укрепить паллиатив и хоспис, высвободить ресурсы стационара.", "effects": {"quality": 5, "overload": -4, "finance": -3, "infra": -2, "reputation": 4}}, {"id": "it_invest", "title": "Инвестиции в ИТ и документооборот", "text": "Внедрение ИС, электронной записи и цифровой документации.", "effects": {"finance": 3, "penalties": -5, "access": 3, "staff": 1, "infra": 2}}];
-const EVENTS = [{"title": "Новые стандарты ОМС", "text": "Переход на обновлённые стандарты оплаты и контроля.", "effects": {"volumes": -3, "penalties": 3}}, {"title": "Ужесточение плана диспансеризации", "text": "Регион увеличивает целевые показатели посещений поликлиники.", "effects": {"volumes": 4, "access": -3}}, {"title": "Проверка страховой компании", "text": "Выездная проверка и детальный аудит документации.", "effects": {"penalties": 8, "finance": -4}}, {"title": "Коммунальная авария", "text": "Авария на инженерных сетях в одном из корпусов.", "effects": {"infra": -8, "overload": 5, "reputation": -3}}, {"title": "Пересмотр тарифов", "text": "Изменение тарифов ОМС и перераспределение объёмов.", "effects": {"finance": -3, "volumes": -4, "reputation": -2}}, {"title": "Кадровая волна", "text": "Уход части среднего персонала и ключевых специалистов.", "effects": {"staff": -8, "quality": -3, "access": -2}}, {"title": "Медийный сюжет о больнице", "text": "В зависимости от траектории это может быть успешный кейс или скандал.", "effects": {}}, {"title": "Итоговый аудит", "text": "Совместная комиссия ТФОМС и учредителя подводит итоги.", "effects": {}}];
+(function(){
+  const METRICS = {
+    finance:     { name: "Финансовый результат по ОМС", direction: "up", hint: "больше — лучше", color: "#0f6b7c" },
+    volumes:     { name: "Выполнение объёмов по ТПГГ", direction: "up", hint: "больше — лучше", color: "#2e8b57" },
+    penalties:   { name: "Штрафы и претензии ОМС", direction: "down", hint: "меньше — лучше", color: "#dc2626" },
+    access:      { name: "Доступность и снижение очередей", direction: "up", hint: "больше — лучше", color: "#c27e3e" },
+    quality:     { name: "Качество и безопасность", direction: "up", hint: "больше — лучше", color: "#7c3aed" },
+    overload:    { name: "Перегрузка стационаров", direction: "down", hint: "меньше — лучше", color: "#ea580c" },
+    infra:       { name: "Состояние зданий", direction: "up", hint: "больше — лучше", color: "#0891b2" },
+    staff:       { name: "Кадровая устойчивость", direction: "up", hint: "больше — лучше", color: "#059669" },
+    reputation:  { name: "Репутация и доверие пациентов", direction: "up", hint: "больше — лучше", color: "#8b5cf6" }
+  };
 
-let state = {
-  round: 0,
-  metrics: {...INITIAL},
-  selected: [],
-  log: ['Игра началась. Обсудите исходное состояние больницы.'],
-  eventShown: false,
-  noInfra: 0,
-  noStaff: 0,
-  noQuality: 0
-};
+  const INITIAL = {
+    finance: 42, volumes: 48, penalties: 62, access: 40, quality: 52,
+    overload: 70, infra: 35, staff: 44, reputation: 46
+  };
 
-let history = [{...INITIAL}];
-let metricsChart = null;
+  const DECISIONS = [
+    { id: "audit_docs", title: "Внутренний аудит документации", text: "Проверка карт перед ОМС, обучение кодированию.", effects: {finance:4, penalties:-10, access:-2, staff:-1, reputation:2} },
+    { id: "strengthen_outpatient", title: "Усилить поликлинику", text: "Больше приёмов и диспансеризации.", effects: {access:8, volumes:4, overload:-5, quality:2, staff:-3} },
+    { id: "shorter_los", title: "Снижение экономических потерь при использовании коечного фонда", text: "Повышение оборота койки, снижение длительности госпитализаций.", effects: {finance:5, overload:-8, quality:-3, penalties:-2, reputation:-1} },
+    { id: "convert_beds", title: "Расширение и усиление дневного стационара", text: "Перевод коек из стационара, повышение доли малоинвазивных вмешательств.", effects: {volumes:5, finance:3, overload:-6, access:3, infra:-1} },
+    { id: "paid_services", title: "Запустить платные услуги", text: "Развитие платных/ДМС услуг.", effects: {finance:8, volumes:-2, access:-3, reputation:-4} },
+    { id: "staff_package", title: "Кадровая устойчивость", text: "Доплаты, жильё, обучение, привлечение молодых специалистов.", effects: {staff:8, quality:3, finance:-5, access:2, overload:-2} },
+    { id: "cap_repair", title: "Капремонт старого корпуса", text: "Временное закрытие части коек.", effects: {infra:10, overload:5, finance:-4, access:-3, reputation:2} },
+    { id: "cost_cutting", title: "Антикризисная экономия", text: "Экономия на расходниках и обучении.", effects: {finance:6, quality:-5, staff:-4, reputation:-3, penalties:3} },
+    { id: "med_equipment", title: "Медицинское оборудование", text: "Снижение простоя из-за ремонта, ночные смены на МРТ/КТ/лаборатории.", effects: {finance:-4, access:5, quality:3, overload:-3, reputation:4, penalties:-2} },
+    { id: "it_invest", title: "ИТ и документооборот", text: "Электронная запись, цифровая документация.", effects: {finance:3, penalties:-5, access:3, staff:1, infra:2} }
+  ];
 
-const SCENARIOS = [
-  'Дефицит по ОМС, очереди в поликлинике и изношенный корпус терапии.',
-  'Ужесточение планов по диспансеризации, растут очереди на приём.',
-  'Выездная проверка страховщика, риск крупных штрафов.',
-  'Зимняя авария в одном из корпусов, часть коек недоступна.',
-  'Пересмотр тарифов, снижение доходов по отдельным профилям.',
-  'Кадровый кризис: уход части среднего персонала и специалистов.',
-  'Медийный сюжет о больнице — успех или скандал (решает траектория).',
-  'Итоговый аудит ТФОМС и учредителя.'
-];
+  const EVENTS = [
+    { title: "Новые стандарты ОМС", text: "Переход на обновлённые стандарты оплаты.", effects: {volumes:-3, penalties:3} },
+    { title: "Ужесточение плана диспансеризации", text: "Целевые показатели посещений выросли.", effects: {volumes:4, access:-3} },
+    { title: "Проверка страховой компании", text: "Выездная проверка документации.", effects: {penalties:8, finance:-4} },
+    { title: "Коммунальная авария", text: "Авария в инженерных сетях.", effects: {infra:-8, overload:5, reputation:-3} },
+    { title: "Пересмотр тарифов", text: "Изменение тарифов ОМС.", effects: {finance:-3, volumes:-4, reputation:-2} },
+    { title: "Кадровая волна", text: "Уход части персонала.", effects: {staff:-8, quality:-3, access:-2} },
+    { title: "Медийный сюжет", text: "В зависимости от траектории — успех или скандал.", effects: {} },
+    { title: "Итоговый аудит", text: "Комиссия ТФОМС подводит итоги.", effects: {} }
+  ];
 
-function clamp(v){return Math.max(0, Math.min(100, v));}
+  const SCENARIOS = [
+    'Дефицит по ОМС, очереди в поликлинике и изношенный корпус терапии.',
+    'Ужесточение планов по диспансеризации, растут очереди на приём.',
+    'Выездная проверка страховщика, риск крупных штрафов.',
+    'Зимняя авария в одном из корпусов, часть коек недоступна.',
+    'Пересмотр тарифов, снижение доходов по отдельным профилям.',
+    'Кадровый кризис: уход части среднего персонала и специалистов.',
+    'Медийный сюжет о больнице — успех или скандал (решает траектория).',
+    'Итоговый аудит ТФОМС и учредителя.'
+  ];
 
-function renderMetrics(){
-  const box = document.getElementById('metrics');
-  box.innerHTML = '';
-  Object.entries(state.metrics).forEach(([key,val])=>{
-    const meta = METRICS[key];
-    const score = meta.direction === 'down' ? 100 - val : val;
-    const div = document.createElement('div');
-    div.className = 'metric';
-    div.innerHTML = `<div class="metric-label"><span>${meta.name}</span><strong>${val}</strong></div><div class="bar"><div class="fill" style="width:${score}%"></div></div>`;
-    box.appendChild(div);
-  });
-}
-
-function renderScenario(){
-  const idx = Math.min(state.round, SCENARIOS.length-1);
-  document.getElementById('roundTitle').textContent = `Q${state.round+1} — ${EVENTS[idx].title}`;
-  document.getElementById('scenarioText').textContent = SCENARIOS[idx];
-}
-
-function renderDecisions(){
-  const box = document.getElementById('decisions');
-  box.innerHTML = '';
-  DECISIONS.forEach(dec=>{
-    const sel = state.selected.includes(dec.id);
-    const disabled = !sel && state.selected.length >= 2;
-    const btn = document.createElement('button');
-    btn.className = 'decision' + (sel ? ' sel' : '');
-    btn.disabled = disabled;
-    btn.innerHTML = `<div class="dtitle">${dec.title}</div><div class="dtext">${dec.text}</div><div class="tags">${Object.entries(dec.effects).map(([k,v])=>`<span class="tag">${METRICS[k].name} ${v>0?'+':''}${v}</span>`).join('')}</div>`;
-    btn.onclick = ()=>{
-      if(state.round >= 8) return;
-      if(sel){
-        state.selected = state.selected.filter(x=>x!==dec.id);
-      }else if(state.selected.length < 2){
-        state.selected.push(dec.id);
-      }
-      renderDecisions();
-      document.getElementById('applyBtn').disabled = state.selected.length !== 2;
-    };
-    box.appendChild(btn);
-  });
-}
-
-function renderLog(){
-  const box = document.getElementById('log');
-  box.innerHTML = state.log.slice(-12).map(item=>`<div class="logitem">${item}</div>`).join('');
-}
-
-function renderStatus(){
-  const box = document.getElementById('statusBox');
-  if(state.round >= 8){
-    const m = state.metrics;
-    const strong = Object.entries(m).filter(([k,v])=>k==='overload'||k==='penalties'?v<=40:v>=60).length;
-    const crisis = m.finance < 30 || m.overload > 85 || m.infra < 25;
-    let text;
-    if(!crisis && strong>=4 && m.staff>=35 && Object.values(m).every((x,i)=>x>=30 || Object.keys(m)[i]==='penalties')){
-      text = 'Сбалансированная больница. Обсудите, какие решения оказались ключевыми.';
-    }else if(m.finance >= 55 && (m.quality < 40 || m.access < 40 || m.reputation < 40)){
-      text = 'Финансово устойчиво, но ценой качества, доступности или доверия.';
-    }else if(m.quality >= 65 && m.reputation >= 60 && m.finance < 40){
-      text = 'Высокое качество и доверие без устойчивых финансов.';
-    }else if(crisis){
-      text = 'Кризисная больница. Попробуйте разобрать, где система дала сбой.';
-    }else{
-      text = 'Смешанный результат. Определите, какая стратегия доминировала.';
-    }
-    box.innerHTML = `<strong>Игра завершена</strong><div>${text}</div>`;
-  }else{
-    box.innerHTML = `<strong>Раунд ${state.round+1}</strong><div>Выбрано решений: ${state.selected.length}/2</div>`;
-  }
-}
-
-function initChart(){
-  const ctx = document.getElementById('metricsChart').getContext('2d');
-  const labels = history.map((_,i)=>`Q${i}`);
-  metricsChart = new Chart(ctx, {
-    type: 'line',
-    data: {
-      labels,
-      datasets: [
-        {label:'Финансы', data: history.map(h=>h.finance), borderColor:'#0d6d70', tension:0.2},
-        {label:'Качество', data: history.map(h=>h.quality), borderColor:'#1f7a8c', tension:0.2},
-        {label:'Перегрузка (обратная)', data: history.map(h=>100-h.overload), borderColor:'#b46b30', tension:0.2},
-        {label:'Репутация', data: history.map(h=>h.reputation), borderColor:'#8b5cf6', tension:0.2}
-      ]
-    },
-    options:{
-      responsive:true,
-      maintainAspectRatio:false,
-      scales:{y:{min:0,max:100}},
-      plugins:{legend:{labels:{boxWidth:12,font:{size:11}}}}
-    }
-  });
-}
-
-function updateChart(){
-  if(!metricsChart){
-    initChart();
-    return;
-  }
-  metricsChart.data.labels = history.map((_,i)=>`Q${i}`);
-  metricsChart.data.datasets[0].data = history.map(h=>h.finance);
-  metricsChart.data.datasets[1].data = history.map(h=>h.quality);
-  metricsChart.data.datasets[2].data = history.map(h=>100-h.overload);
-  metricsChart.data.datasets[3].data = history.map(h=>h.reputation);
-  metricsChart.update();
-}
-
-function snapshotMetrics(){
-  history.push({...state.metrics});
-  updateChart();
-}
-
-function renderAll(){
-  renderMetrics();
-  renderScenario();
-  renderDecisions();
-  renderLog();
-  renderStatus();
-  updateChart();
-}
-
-function revealEvent(){
-  if(state.eventShown) return;
-  state.eventShown = true;
-  const idx = Math.min(state.round, EVENTS.length-1);
-  const ev = EVENTS[idx];
-  document.getElementById('eventBox').innerHTML = `<strong>${ev.title}</strong><br><span class="small">${ev.text}</span>`;
-}
-
-function applyEventEffects(){
-  const idx = Math.min(state.round, EVENTS.length-1);
-  const ev = EVENTS[idx];
-  const m = state.metrics;
-  if(idx === 6){
-    if(m.reputation >= 55){
-      m.reputation = clamp(m.reputation + 5);
-      m.volumes = clamp(m.volumes + 3);
-      state.log.push('Медийный сюжет: успешный кейс, больница получила позитивный образ.');
-    }else{
-      m.reputation = clamp(m.reputation - 6);
-      m.penalties = clamp(m.penalties + 3);
-      state.log.push('Медийный сюжет: скандал, растёт недоверие и внимание проверяющих.');
-    }
-    return;
-  }
-  Object.entries(ev.effects || {}).forEach(([k,v])=>{
-    m[k] = clamp(m[k] + v);
-  });
-}
-
-function applyAutorules(chosenIds){
-  const infraTouched = chosenIds.some(id=>['cap_repair','palliative','it_invest','convert_beds'].includes(id));
-  const staffTouched = chosenIds.some(id=>['staff_package'].includes(id));
-  const qualityTouched = chosenIds.some(id=>['palliative','audit_docs','shorter_los','it_invest'].includes(id));
-  if(infraTouched) state.noInfra = 0; else state.noInfra++;
-  if(staffTouched) state.noStaff = 0; else state.noStaff++;
-  if(qualityTouched) state.noQuality = 0; else state.noQuality++;
-  const m = state.metrics;
-  if(state.noInfra >= 2){
-    m.infra = clamp(m.infra - 6);
-    m.overload = clamp(m.overload + 4);
-    state.log.push('Автоштраф: два квартала без решений по инфраструктуре.');
-    state.noInfra = 0;
-  }
-  if(state.noStaff >= 2){
-    m.staff = clamp(m.staff - 7);
-    m.quality = clamp(m.quality - 3);
-    m.reputation = clamp(m.reputation - 2);
-    state.log.push('Автоштраф: два квартала без кадровых решений.');
-    state.noStaff = 0;
-  }
-  if(state.noQuality >= 2){
-    m.penalties = clamp(m.penalties + 6);
-    m.reputation = clamp(m.reputation - 5);
-    state.log.push('Автоштраф: долгое игнорирование качества.');
-    state.noQuality = 0;
-  }
-  if(m.volumes < 30){
-    m.finance = clamp(m.finance - 6);
-    m.reputation = clamp(m.reputation - 3);
-    state.log.push('Срыв объёмов: регион недоволен, падают финансы и доверие.');
-  }
-  if(m.overload > 85){
-    m.quality = clamp(m.quality - 6);
-    m.reputation = clamp(m.reputation - 4);
-    state.log.push('Перегрузка стационара: ухудшение качества и репутации.');
-  }
-}
-
-function applyRound(){
-  if(state.selected.length !== 2 || state.round >= 8) return;
-  const chosen = state.selected.map(id=>DECISIONS.find(d=>d.id===id));
-  const m = state.metrics;
-  const changes = {};
-  chosen.forEach(dec=>{
-    Object.entries(dec.effects).forEach(([k,v])=>{
-      changes[k] = (changes[k]||0) + v;
-    });
-  });
-  Object.entries(changes).forEach(([k,v])=>{
-    m[k] = clamp(m[k] + v);
-  });
-  applyEventEffects();
-  applyAutorules(state.selected);
-  state.log.push(`Раунд ${state.round+1}: выбраны решения «${chosen[0].title}» и «${chosen[1].title}».`);
-  state.round++;
-  state.selected = [];
-  state.eventShown = false;
-  document.getElementById('eventBox').innerHTML = 'Нажмите «Показать событие», когда группа будет готова.';
-  document.getElementById('applyBtn').disabled = true;
-  if(state.round >= 8){
-    state.log.push('Финальный аудит: обсудите, какую модель больницы вы построили.');
-  }
-  snapshotMetrics();
-  renderAll();
-}
-
-function resetGame(){
-  state = {
+  let state = {
     round: 0,
     metrics: {...INITIAL},
     selected: [],
-    log: ['Игра началась. Обсудите исходное состояние больницы.'],
+    log: ['🎮 Игра началась. Обсудите исходное состояние больницы.'],
     eventShown: false,
     noInfra: 0,
     noStaff: 0,
     noQuality: 0
   };
-  history = [{...INITIAL}];
-  document.getElementById('eventBox').innerHTML = 'Нажмите «Показать событие», когда группа будет готова.';
-  document.getElementById('applyBtn').disabled = true;
+
+  let history = [{...INITIAL}];
+  let chart = null;
+
+  const clamp = v => Math.max(0, Math.min(100, v));
+
+  function renderMetrics(){
+    const container = document.getElementById('metricsContainer');
+    container.innerHTML = '';
+    Object.entries(state.metrics).forEach(([key, val]) => {
+      const meta = METRICS[key];
+      const score = meta.direction === 'down' ? 100 - val : val;
+      const div = document.createElement('div');
+      div.className = 'metric-item';
+      div.innerHTML = `
+        <div class="metric-header">
+          <span>${meta.name} <span style="font-size:0.7rem;color:#64748b;font-weight:400;">(${meta.hint})</span></span>
+          <strong>${val}</strong>
+        </div>
+        <div class="metric-bar-bg"><div class="metric-bar-fill" style="width:${score}%"></div></div>
+      `;
+      container.appendChild(div);
+    });
+  }
+
+  function renderScenario(){
+    const idx = Math.min(state.round, SCENARIOS.length - 1);
+    document.getElementById('roundTitle').textContent = `Q${state.round + 1} — ${EVENTS[idx].title}`;
+    document.getElementById('scenarioText').textContent = SCENARIOS[idx];
+  }
+
+  function renderDecisions(){
+    const container = document.getElementById('decisionsContainer');
+    container.innerHTML = '';
+    DECISIONS.forEach(dec => {
+      const isSelected = state.selected.includes(dec.id);
+      const isDisabled = !isSelected && state.selected.length >= 2;
+      
+      const card = document.createElement('div');
+      card.className = `decision-card ${isSelected ? 'selected' : ''} ${isDisabled ? 'disabled' : ''}`;
+      
+      const tagsHtml = Object.entries(dec.effects).map(([k, v]) => 
+        `<span class="tag">${METRICS[k].name} ${v > 0 ? '+' : ''}${v}</span>`
+      ).join('');
+      
+      card.innerHTML = `
+        <div class="decision-title">${dec.title}</div>
+        <div class="decision-desc">${dec.text}</div>
+        <div class="tags">${tagsHtml}</div>
+      `;
+      
+      card.onclick = () => {
+        if (state.round >= 8) return;
+        if (isSelected) {
+          state.selected = state.selected.filter(id => id !== dec.id);
+        } else if (state.selected.length < 2) {
+          state.selected.push(dec.id);
+        }
+        renderDecisions();
+        document.getElementById('applyBtn').disabled = state.selected.length !== 2;
+      };
+      
+      container.appendChild(card);
+    });
+  }
+
+  function renderLog(){
+    const container = document.getElementById('logContainer');
+    container.innerHTML = state.log.slice(-12).map(item => 
+      `<div class="log-entry">${item}</div>`
+    ).join('');
+  }
+
+  function renderStatus(){
+    const box = document.getElementById('statusBox');
+    if (state.round >= 8) {
+      const m = state.metrics;
+      let text = '';
+      if (m.finance >= 55 && m.quality >= 55 && m.reputation >= 55 && m.infra >= 50) {
+        text = '🌟 Отличный результат! Больница процветает.';
+      } else if (m.finance < 30 || m.overload > 85 || m.infra < 25) {
+        text = '⚠️ Кризисная ситуация. Требуются срочные меры.';
+      } else {
+        text = '📊 Смешанный результат. Проанализируйте стратегию.';
+      }
+      box.innerHTML = `<strong>🏁 Игра завершена</strong><br>${text}`;
+    } else {
+      box.innerHTML = `<strong>📍 Раунд ${state.round + 1} из 8</strong><br>Выбрано решений: ${state.selected.length}/2`;
+    }
+  }
+
+  function initChart(){
+    const ctx = document.getElementById('metricsChart').getContext('2d');
+    chart = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: history.map((_, i) => `Q${i}`),
+        datasets: Object.keys(METRICS).map(key => ({
+          label: METRICS[key].name,
+          data: history.map(h => h[key]),
+          borderColor: METRICS[key].color,
+          backgroundColor: 'transparent',
+          tension: 0.2,
+          borderWidth: 2,
+          pointRadius: 2,
+          pointHoverRadius: 4
+        }))
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: { y: { min: 0, max: 100 } },
+        plugins: { 
+          legend: { 
+            labels: { boxWidth: 10, font: { size: 9 } },
+            position: 'bottom'
+          } 
+        }
+      }
+    });
+  }
+
+  function updateChart(){
+    if (!chart) { initChart(); return; }
+    chart.data.labels = history.map((_, i) => `Q${i}`);
+    chart.data.datasets.forEach((dataset, i) => {
+      const key = Object.keys(METRICS)[i];
+      dataset.data = history.map(h => h[key]);
+    });
+    chart.update();
+  }
+
+  function snapshotMetrics(){
+    history.push({...state.metrics});
+    updateChart();
+  }
+
+  function renderAll(){
+    renderMetrics();
+    renderScenario();
+    renderDecisions();
+    renderLog();
+    renderStatus();
+    updateChart();
+  }
+
+  function revealEvent(){
+    if (state.eventShown) return;
+    state.eventShown = true;
+    const idx = Math.min(state.round, EVENTS.length - 1);
+    const ev = EVENTS[idx];
+    document.getElementById('eventBox').innerHTML = `<strong>📌 ${ev.title}</strong><br><span style="font-size:0.9rem;">${ev.text}</span>`;
+  }
+
+  function applyEventEffects(){
+    const idx = Math.min(state.round, EVENTS.length - 1);
+    const ev = EVENTS[idx];
+    const m = state.metrics;
+    
+    if (idx === 6) {
+      if (m.reputation >= 55) {
+        m.reputation = clamp(m.reputation + 5);
+        m.volumes = clamp(m.volumes + 3);
+        state.log.push('📺 Медийный сюжет: успешный кейс, позитивный образ.');
+      } else {
+        m.reputation = clamp(m.reputation - 6);
+        m.penalties = clamp(m.penalties + 3);
+        state.log.push('📺 Медийный сюжет: скандал, недоверие растёт.');
+      }
+      return;
+    }
+    
+    Object.entries(ev.effects || {}).forEach(([k, v]) => {
+      m[k] = clamp(m[k] + v);
+    });
+  }
+
+  function applyAutorules(chosenIds){
+    const infraTouched = chosenIds.some(id => ['cap_repair', 'med_equipment', 'it_invest', 'convert_beds'].includes(id));
+    const staffTouched = chosenIds.includes('staff_package');
+    const qualityTouched = chosenIds.some(id => ['med_equipment', 'audit_docs', 'shorter_los', 'it_invest'].includes(id));
+    
+    state.noInfra = infraTouched ? 0 : state.noInfra + 1;
+    state.noStaff = staffTouched ? 0 : state.noStaff + 1;
+    state.noQuality = qualityTouched ? 0 : state.noQuality + 1;
+    
+    const m = state.metrics;
+    if (state.noInfra >= 2) {
+      m.infra = clamp(m.infra - 6);
+      m.overload = clamp(m.overload + 4);
+      state.log.push('⚠️ Автоштраф: два квартала без решений по инфраструктуре.');
+      state.noInfra = 0;
+    }
+    if (state.noStaff >= 2) {
+      m.staff = clamp(m.staff - 7);
+      m.quality = clamp(m.quality - 3);
+      m.reputation = clamp(m.reputation - 2);
+      state.log.push('⚠️ Автоштраф: два квартала без кадровых решений.');
+      state.noStaff = 0;
+    }
+    if (state.noQuality >= 2) {
+      m.penalties = clamp(m.penalties + 6);
+      m.reputation = clamp(m.reputation - 5);
+      state.log.push('⚠️ Автоштраф: долгое игнорирование качества.');
+      state.noQuality = 0;
+    }
+  }
+
+  function applyRound(){
+    if (state.selected.length !== 2 || state.round >= 8) return;
+    
+    const chosen = state.selected.map(id => DECISIONS.find(d => d.id === id));
+    const m = state.metrics;
+    
+    chosen.forEach(dec => {
+      Object.entries(dec.effects).forEach(([k, v]) => {
+        m[k] = clamp(m[k] + v);
+      });
+    });
+    
+    applyEventEffects();
+    applyAutorules(state.selected);
+    
+    state.log.push(`📌 Раунд ${state.round + 1}: выбраны «${chosen[0].title}» и «${chosen[1].title}».`);
+    state.round++;
+    state.selected = [];
+    state.eventShown = false;
+    
+    document.getElementById('eventBox').innerHTML = '👥 Нажмите «Показать событие», когда группа готова.';
+    document.getElementById('applyBtn').disabled = true;
+    
+    if (state.round >= 8) {
+      state.log.push('🏁 Финальный аудит: обсудите результаты.');
+    }
+    
+    snapshotMetrics();
+    renderAll();
+  }
+
+  function resetGame(){
+    state = {
+      round: 0,
+      metrics: {...INITIAL},
+      selected: [],
+      log: ['🎮 Игра началась. Обсудите исходное состояние больницы.'],
+      eventShown: false,
+      noInfra: 0,
+      noStaff: 0,
+      noQuality: 0
+    };
+    history = [{...INITIAL}];
+    document.getElementById('eventBox').innerHTML = '👥 Нажмите «Показать событие», когда группа готова.';
+    document.getElementById('applyBtn').disabled = true;
+    renderAll();
+  }
+
+  document.getElementById('eventBtn').onclick = revealEvent;
+  document.getElementById('applyBtn').onclick = applyRound;
+  document.getElementById('resetBtn').onclick = resetGame;
+
   renderAll();
-}
-
-document.getElementById('eventBtn').onclick = revealEvent;
-document.getElementById('applyBtn').onclick = applyRound;
-document.getElementById('resetBtn').onclick = resetGame;
-
-renderAll();
+})();
 </script>
 </body>
 </html>
