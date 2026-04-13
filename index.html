@@ -92,9 +92,38 @@
       box-shadow:0 1px 2px rgba(0,0,0,0.02);
     }
     
-    .chart-wrapper{
-      height:220px;
+    /* Таблица истории */
+    .table-wrapper{
+      max-height:280px;
+      overflow:auto;
       margin-top:4px;
+      border-radius:12px;
+      border:1px solid #dde5ec;
+    }
+    .metrics-table{
+      width:100%;
+      border-collapse:collapse;
+      font-size:0.75rem;
+      text-align:center;
+      background:#fff;
+    }
+    .metrics-table th{
+      background:#0b4f6c;
+      color:#fff;
+      font-weight:600;
+      padding:6px 4px;
+      position:sticky;
+      top:0;
+      white-space:nowrap;
+    }
+    .metrics-table td{
+      padding:5px 4px;
+      border-bottom:1px solid #e2e8f0;
+    }
+    .metrics-table tr:last-child td{border-bottom:none}
+    .metrics-table .round-label{
+      font-weight:700;
+      background:#f1f5f9;
     }
     
     .right-panel{
@@ -170,18 +199,14 @@
       border:1px solid #cbd7e2;
       transition:all 0.15s;
     }
-    .btn:hover{
-      background:#e0e8f0;
-    }
+    .btn:hover{background:#e0e8f0}
     .btn-primary{
       background:linear-gradient(145deg,#0b6f7c,#9e632b);
       color:#fff;
       border:none;
       box-shadow:0 4px 12px rgba(11,111,124,0.3);
     }
-    .btn-primary:hover{
-      background:linear-gradient(145deg,#0a5e6a,#8e5626);
-    }
+    .btn-primary:hover{background:linear-gradient(145deg,#0a5e6a,#8e5626)}
     .btn:disabled{opacity:0.5;pointer-events:none}
     
     .status-badge{
@@ -201,7 +226,7 @@
       .decisions-grid{grid-template-columns:1fr}
     }
   </style>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- Chart.js удалён -->
 </head>
 <body>
 <div class="dashboard">
@@ -223,9 +248,9 @@
       </div>
       
       <div class="card">
-        <h3>📈 Динамика показателей</h3>
-        <div class="chart-wrapper">
-          <canvas id="metricsChart"></canvas>
+        <h3>📉 История по раундам</h3>
+        <div class="table-wrapper" id="tableWrapper">
+          <table class="metrics-table" id="metricsTable"></table>
         </div>
       </div>
     </div>
@@ -258,15 +283,15 @@
 <script>
 (function(){
   const METRICS = {
-    finance:     { name: "Финансовый результат по ОМС", direction: "up", hint: "больше — лучше", color: "#0f6b7c" },
-    volumes:     { name: "Выполнение объёмов по ТПГГ", direction: "up", hint: "больше — лучше", color: "#2e8b57" },
-    penalties:   { name: "Штрафы и претензии ОМС", direction: "down", hint: "меньше — лучше", color: "#dc2626" },
-    access:      { name: "Доступность и снижение очередей", direction: "up", hint: "больше — лучше", color: "#c27e3e" },
-    quality:     { name: "Качество и безопасность", direction: "up", hint: "больше — лучше", color: "#7c3aed" },
-    overload:    { name: "Перегрузка стационаров", direction: "down", hint: "меньше — лучше", color: "#ea580c" },
-    infra:       { name: "Состояние зданий", direction: "up", hint: "больше — лучше", color: "#0891b2" },
-    staff:       { name: "Кадровая устойчивость", direction: "up", hint: "больше — лучше", color: "#059669" },
-    reputation:  { name: "Репутация и доверие пациентов", direction: "up", hint: "больше — лучше", color: "#8b5cf6" }
+    finance:     { name: "Финансовый результат по ОМС", short: "💰", direction: "up", hint: "больше — лучше", color: "#0f6b7c" },
+    volumes:     { name: "Выполнение объёмов по ТПГГ", short: "📊", direction: "up", hint: "больше — лучше", color: "#2e8b57" },
+    penalties:   { name: "Штрафы и претензии ОМС", short: "⚠️", direction: "down", hint: "меньше — лучше", color: "#dc2626" },
+    access:      { name: "Доступность и снижение очередей", short: "🚪", direction: "up", hint: "больше — лучше", color: "#c27e3e" },
+    quality:     { name: "Качество и безопасность", short: "🏥", direction: "up", hint: "больше — лучше", color: "#7c3aed" },
+    overload:    { name: "Перегрузка стационаров", short: "⏱️", direction: "down", hint: "меньше — лучше", color: "#ea580c" },
+    infra:       { name: "Состояние зданий", short: "🏗️", direction: "up", hint: "больше — лучше", color: "#0891b2" },
+    staff:       { name: "Кадровая устойчивость", short: "👥", direction: "up", hint: "больше — лучше", color: "#059669" },
+    reputation:  { name: "Репутация и доверие пациентов", short: "⭐", direction: "up", hint: "больше — лучше", color: "#8b5cf6" }
   };
 
   const INITIAL = {
@@ -321,7 +346,6 @@
   };
 
   let history = [{...INITIAL}];
-  let chart = null;
 
   const clamp = v => Math.max(0, Math.min(100, v));
 
@@ -410,50 +434,38 @@
     }
   }
 
-  function initChart(){
-    const ctx = document.getElementById('metricsChart').getContext('2d');
-    chart = new Chart(ctx, {
-      type: 'line',
-      data: {
-        labels: history.map((_, i) => `Q${i}`),
-        datasets: Object.keys(METRICS).map(key => ({
-          label: METRICS[key].name,
-          data: history.map(h => h[key]),
-          borderColor: METRICS[key].color,
-          backgroundColor: 'transparent',
-          tension: 0.2,
-          borderWidth: 2,
-          pointRadius: 2,
-          pointHoverRadius: 4
-        }))
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        scales: { y: { min: 0, max: 100 } },
-        plugins: { 
-          legend: { 
-            labels: { boxWidth: 10, font: { size: 9 } },
-            position: 'bottom'
-          } 
+  function renderMetricsTable(){
+    const table = document.getElementById('metricsTable');
+    const keys = Object.keys(METRICS);
+    
+    let html = '<thead><tr><th>Раунд</th>';
+    keys.forEach(key => { html += `<th title="${METRICS[key].name}">${METRICS[key].short}</th>`; });
+    html += '</tr></thead><tbody>';
+    
+    history.forEach((snapshot, idx) => {
+      html += `<tr><td class="round-label">${idx === 0 ? 'Старт' : 'Q'+idx}</td>`;
+      keys.forEach(key => {
+        const val = snapshot[key];
+        let color = '';
+        if (METRICS[key].direction === 'down') {
+          if (val > 70) color = 'style="color:#dc2626;font-weight:600;"';
+          else if (val < 30) color = 'style="color:#059669;font-weight:600;"';
+        } else {
+          if (val < 30) color = 'style="color:#dc2626;font-weight:600;"';
+          else if (val > 70) color = 'style="color:#059669;font-weight:600;"';
         }
-      }
+        html += `<td ${color}>${val}</td>`;
+      });
+      html += '</tr>';
     });
-  }
-
-  function updateChart(){
-    if (!chart) { initChart(); return; }
-    chart.data.labels = history.map((_, i) => `Q${i}`);
-    chart.data.datasets.forEach((dataset, i) => {
-      const key = Object.keys(METRICS)[i];
-      dataset.data = history.map(h => h[key]);
-    });
-    chart.update();
+    
+    html += '</tbody>';
+    table.innerHTML = html;
   }
 
   function snapshotMetrics(){
     history.push({...state.metrics});
-    updateChart();
+    renderMetricsTable();
   }
 
   function renderAll(){
@@ -462,7 +474,7 @@
     renderDecisions();
     renderLog();
     renderStatus();
-    updateChart();
+    renderMetricsTable();
   }
 
   function revealEvent(){
